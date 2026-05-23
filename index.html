@@ -570,7 +570,7 @@
       </a>
       <div class="visitor-stat" aria-live="polite">
         <span class="visitor-label">Visitor number</span>
-        <span class="visitor-count" id="visitor-count">...</span>
+        <span class="visitor-count" id="visitor-count" data-visitor-counter>#</span>
       </div>
       <div class="footer-links">
         <a href="https://kaigentic.com/">kaigentic.com</a>
@@ -581,25 +581,29 @@
         async src="//gc.zgo.at/count.js"></script>
       <script>
         (function () {
-          var output = document.getElementById("visitor-count");
+          var counter = document.querySelector("[data-visitor-counter]");
 
-          if (!output) {
+          if (!counter) {
             return;
           }
 
-          fetch("https://rishi-kaigentic.goatcounter.com/counter/TOTAL.json")
+          fetch(
+            "https://rishi-kaigentic.goatcounter.com/counter/" +
+              encodeURIComponent(location.pathname.replace(/\/$/, "") || "/") +
+              ".json"
+          )
             .then(function (response) {
-              if (!response.ok) {
-                throw new Error("Counter unavailable");
-              }
-
               return response.json();
             })
             .then(function (data) {
-              output.textContent = data.count || "0";
+              if (data.count) {
+                counter.textContent = data.count.replace(/[^0-9]/g, "") || data.count;
+              } else {
+                counter.textContent = "-";
+              }
             })
             .catch(function () {
-              output.textContent = "...";
+              counter.textContent = "-";
             });
         }());
       </script>
