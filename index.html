@@ -577,34 +577,121 @@
         <a href="https://www.linkedin.com/company/kaigentic">LinkedIn</a>
         <a href="https://kaigentic.com/careers/">Careers</a>
       </div>
-      <script data-goatcounter="https://rishi-kaigentic.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
+      <script
+        data-goatcounter="https://rishi-kaigentic.goatcounter.com/count"
+        data-goatcounter-settings='{"path": "/"}'
+        src="https://gc.zgo.at/count.js"></script>
+      <noscript>
+        <img
+          src="https://rishi-kaigentic.goatcounter.com/count?p=%2F"
+          alt=""
+          aria-hidden="true"
+          width="1"
+          height="1"
+          style="position:absolute;left:-9999px;width:1px;height:1px;"
+        >
+      </noscript>
       <script>
         (function () {
           var counter = document.querySelector("[data-visitor-counter]");
+          var counterEndpoint = "https://rishi-kaigentic.goatcounter.com/counter/";
+          var countEndpoint = "https://rishi-kaigentic.goatcounter.com/count";
+          var trackingFallbackDelay = 1500;
+          var refreshDelay = 2600;
+          var refreshInterval = 30000;
+          var trackingFallbackSent = false;
 
           if (!counter) {
             return;
           }
 
-          fetch(
-            "https://rishi-kaigentic.goatcounter.com/counter/" +
-              encodeURIComponent(location.pathname.replace(/\/$/, "") || "/") +
-              ".json"
-          )
-            .then(function (response) {
-              return response.json();
-            })
-            .then(function (data) {
-              if (data.count) {
-                counter.textContent = data.count.replace(/[^0-9]/g, "") || data.count;
-              } else {
-                counter.textContent = "-";
+          function counterPath() {
+            if (window.goatcounter && window.goatcounter.get_data) {
+              var data = window.goatcounter.get_data();
+
+              if (data && data.p) {
+                return data.p;
               }
+            }
+
+            return "/";
+          }
+
+          function renderVisitorCount() {
+            fetch(counterEndpoint + encodeURIComponent(counterPath()) + ".json", {
+              cache: "no-store"
             })
-            .catch(function () {
-              counter.textContent = "-";
+              .then(function (response) {
+                return response.json();
+              })
+              .then(function (data) {
+                if (data.count) {
+                  counter.textContent = data.count.replace(/[^0-9]/g, "") || data.count;
+                } else {
+                  counter.textContent = "-";
+                }
+              })
+              .catch(function () {
+                counter.textContent = "-";
+              });
+          }
+
+          function queryString(data) {
+            var params = [];
+            var key;
+
+            for (key in data) {
+              if (data[key]) {
+                params.push(encodeURIComponent(key) + "=" + encodeURIComponent(data[key]));
+              }
+            }
+
+            return params.join("&");
+          }
+
+          function trackWithImageFallback() {
+            var img;
+
+            if (trackingFallbackSent || (window.goatcounter && window.goatcounter.get_data)) {
+              return;
+            }
+
+            trackingFallbackSent = true;
+            img = document.createElement("img");
+            img.src = countEndpoint + "?" + queryString({
+              p: "/",
+              t: document.title,
+              r: document.referrer,
+              s: window.screen && window.screen.width,
+              q: location.search,
+              rnd: Math.random().toString(36).slice(2, 7)
             });
+            img.alt = "";
+            img.setAttribute("aria-hidden", "true");
+            img.style.position = "absolute";
+            img.style.left = "-9999px";
+            img.style.width = "1px";
+            img.style.height = "1px";
+            img.addEventListener("load", function () {
+              if (img.parentNode) {
+                img.parentNode.removeChild(img);
+              }
+            });
+            document.body.appendChild(img);
+          }
+
+          function startCounterRefresh() {
+            window.setTimeout(trackWithImageFallback, trackingFallbackDelay);
+            window.setTimeout(renderVisitorCount, refreshDelay);
+            window.setInterval(renderVisitorCount, refreshInterval);
+          }
+
+          if (window.goatcounter && window.goatcounter.get_data) {
+            startCounterRefresh();
+          } else {
+            counter.textContent = "-";
+            window.addEventListener("load", startCounterRefresh);
+          }
         }());
       </script>
     </footer>
